@@ -108,6 +108,30 @@
       box-shadow: 0 18px 40px -12px rgba(0, 0, 0, 0.7) !important;
     }
     .leaflet-popup-tip { background: #151B1C !important; border: 1px solid #2E3839 !important; }
+    .leaflet-bar a {
+      background-color: #151B1C !important;
+      color: #ECE6DA !important;
+      border-bottom: 1px solid #2E3839 !important;
+    }
+    .leaflet-bar a:hover {
+      background-color: #1C2526 !important;
+      color: #E8A33D !important;
+    }
+    .leaflet-control-layers {
+      background: #151B1C !important;
+      color: #ECE6DA !important;
+      border: 1px solid #2E3839 !important;
+      border-radius: 8px !important;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5) !important;
+      font-size: 11px !important;
+    }
+    .leaflet-control-layers-expanded {
+      padding: 8px 12px !important;
+      background: #151B1C !important;
+    }
+    .leaflet-control-layers-toggle {
+      filter: invert(0.8) hue-rotate(180deg);
+    }
     input[type=range] { accent-color: #E8A33D; }
 
     @media (prefers-reduced-motion: reduce) {
@@ -1441,11 +1465,47 @@
             scrollWheelZoom: false,
           });
 
-          window.L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-            attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
-            subdomains: 'abcd',
-            maxZoom: 19
-          }).addTo(map);
+          // Zero-API-Key Tile Providers (No watermark, No API key required)
+          // 1. Dark Oceanic Canvas (Esri Base + Reference Labels)
+          const darkBase = window.L.tileLayer(
+            'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}',
+            {
+              attribution: '&copy; Esri &mdash; DeLorme, NAVTEQ',
+              maxZoom: 16
+            }
+          );
+          const darkRef = window.L.tileLayer(
+            'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}',
+            {
+              attribution: '',
+              maxZoom: 16
+            }
+          );
+          const darkOceanGroup = window.L.layerGroup([darkBase, darkRef]).addTo(map);
+
+          // 2. High-Res Satellite Recon
+          const satelliteLayer = window.L.tileLayer(
+            'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+            {
+              attribution: '&copy; Esri World Imagery',
+              maxZoom: 18
+            }
+          );
+
+          // 3. OpenStreetMap
+          const osmLayer = window.L.tileLayer(
+            'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+            {
+              attribution: '&copy; OpenStreetMap contributors',
+              maxZoom: 19
+            }
+          );
+
+          window.L.control.layers({
+            "Dark Oceanic (Default)": darkOceanGroup,
+            "Satellite Imagery": satelliteLayer,
+            "OpenStreetMap": osmLayer
+          }, null, { position: 'topright' }).addTo(map);
 
           COASTAL_STATES.forEach(state => {
             const isActive = state.id === 'kerala';
